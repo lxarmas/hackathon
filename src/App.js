@@ -4,8 +4,9 @@ import HomePage from './components/HomePage';
 import About from './components/About';
 import Footer from './components/Footer';
 import LogIn from './components/LogIn';
-import Books from './components/Books';
+import ChatHistory from './components/ChatHistory';
 import Register from './components/Register';
+
 
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path='/about' element={<About />} />
         <Route path='/login' element={<LogIn />} />
-         <Route path='/books' element={<Books />} />
+         <Route path='/chathistory' element={<ChatHistory />} />
         <Route path='/register' element={<Register />} />
       </Routes>
       <Footer />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../api';
 import Nav from './Nav';
-import './Books.css';
+import './LogIn.css';
 
 
 function LogIn() {
@@ -19,7 +19,7 @@ function LogIn() {
       // Store the user ID instead of token
       localStorage.setItem('userId', response.data.user_id);
 
-      navigate('/books'); // Redirect to books page after successful login
+      navigate('/chathistory'); // Redirect to books page after successful login
     } catch (error) {
       console.error('Login error:', error.response ? error.response.data : error.message);
       // Update error message based on response
