@@ -1,0 +1,81 @@
+/* Navigation */
+.nav {
+    background-color: #456a62;
+    padding: 1em 4em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+    width: 100%;
+    margin: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 2em;
+    margin: 0;
+}
+
+.nav-links li {
+    display: inline;
+    position: relative;
+}
+
+.nav-links li a,
+.nav-links li button { /* Apply styles to both links and buttons */
+    text-decoration: none;
+    color: #f0f0f0;
+    font-weight: bold;
+    font-size: 1.2rem;
+    transition: color 0.3s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.nav-links li a:hover,
+.nav-links li button:hover {
+    color: #598a7f;
+}
+
+.nav-links li::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background-color: #598a7f;
+    left: 50%;
+    bottom: -4px;
+    transition: width 0.3s ease, left 0.3s ease;
+}
+
+.nav-links li:hover::after {
+    width: 100%;
+    left: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .nav {
+        padding: 1em 2em;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 1em;
+    }
+
+    .nav-links li a,
+    .nav-links li button {
+        font-size: 1rem;
+    }
+}
