@@ -1,50 +1,45 @@
 import React, { useState } from 'react';
-import { Button, Form, Card, Container, Row, Col } from 'react-bootstrap';
+import { Button, Form, Card, Container, Row, Col, Spinner } from 'react-bootstrap';
 import Nav from './Nav';
+import axios from 'axios'; // Import axios for API requests
 import './Chat.css';
 
+// Character data with Wikipedia queries and images for each character
 const characters = [
   {
     id: 1,
     name: 'Albert Einstein',
     history: 'A theoretical physicist known for the theory of relativity.',
-    responses: [
-      "Imagination is more important than knowledge.",
-      "I have no special talent. I am only passionately curious.",
-      "Life is like riding a bicycle. To keep your balance, you must keep moving."
-    ],
-    keywords: {
-      physics: "Physics is the most fundamental of the sciences.",
-      relativity: "The theory of relativity transformed how we think about space and time.",
-      bicycle: "Life is like riding a bicycle. To keep your balance, you must keep moving."
+    wikiQuery: 'Albert_Einstein',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Albert_Einstein_Head.jpg',
+    predefinedResponses: {
+      life: "Einstein's life was marked by his quest for knowledge and his work as a theoretical physicist.",
+      theory: "Einstein is best known for the theory of relativity, which revolutionized the understanding of space and time.",
+      work: "During his career, Einstein worked on many scientific theories, including the photoelectric effect and quantum mechanics."
     }
   },
   {
     id: 2,
     name: 'Marie Curie',
     history: 'A physicist and chemist who conducted pioneering research on radioactivity.',
-    responses: [
-      "Nothing in life is to be feared, it is only to be understood.",
-      "I am among those who think that science has great beauty.",
-      "Be less curious about people and more curious about ideas."
-    ],
-    keywords: {
-      radioactivity: "I discovered radioactivity with my husband, Pierre Curie.",
-      fear: "Nothing in life is to be feared, it is only to be understood."
+    wikiQuery: 'Marie_Curie',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/d/d9/Mariecurie.jpg',
+    predefinedResponses: {
+      life: "Marie Curie's life was a journey of scientific discovery, and she was the first woman to win a Nobel Prize.",
+      research: "Marie Curie conducted groundbreaking research on radioactivity, discovering elements like polonium and radium.",
+      legacy: "Her legacy continues today in science, particularly in fields like physics, chemistry, and cancer treatment."
     }
   },
   {
     id: 3,
     name: 'Nelson Mandela',
     history: 'A South African anti-apartheid revolutionary and political leader.',
-    responses: [
-      "It always seems impossible until it’s done.",
-      "Education is the most powerful weapon which you can use to change the world.",
-      "I learned that courage was not the absence of fear, but the triumph over it."
-    ],
-    keywords: {
-      freedom: "I spent 27 years in prison fighting for freedom.",
-      apartheid: "Apartheid is a policy of racial segregation that I fought against."
+    wikiQuery: 'Nelson_Mandela',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Nelson_Mandela_1994.jpg/1280px-Nelson_Mandela_1994.jpg',
+    predefinedResponses: {
+      life: "Mandela's life was dedicated to the fight against apartheid and the pursuit of equality and justice.",
+      leadership: "Mandela showed incredible leadership during South Africa's transition to democracy.",
+      prison: "Nelson Mandela spent 27 years in prison for his anti-apartheid activities, emerging as a global symbol of resistance."
     }
   }
 ];
@@ -53,59 +48,89 @@ function ChatHistory() {
   const [chatMessages, setChatMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [activeCharacter, setActiveCharacter] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  // Select a character to chat with
   const handleSelectCharacter = (character) => {
     setActiveCharacter(character);
-    setChatMessages([]);
+    setChatMessages([]); // Reset chat when selecting a new character
   };
 
-  const handleSendMessage = (event) => {
+  // Fetch data from Wikipedia API based on the character's wikiQuery
+  const fetchCharacterResponse = async (query) => {
+    try {
+      const response = await axios.get(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${query}`
+      );
+      return response.data.extract; // Return the summary extract from the API
+    } catch (error) {
+      console.error('Error fetching Wikipedia data:', error);
+      return "Sorry, I couldn't find more information.";
+    }
+  };
+
+  // Detect keywords in the user's message and return predefined responses
+  const detectKeywords = (message) => {
+    const lowerCaseMessage = message.toLowerCase();
+    if (activeCharacter.predefinedResponses) {
+      const { predefinedResponses } = activeCharacter;
+      if (lowerCaseMessage.includes('life')) {
+        return predefinedResponses.life;
+      } else if (lowerCaseMessage.includes('theory')) {
+        return predefinedResponses.theory;
+      } else if (lowerCaseMessage.includes('work')) {
+        return predefinedResponses.work;
+      } else if (lowerCaseMessage.includes('research')) {
+        return predefinedResponses.research;
+      } else if (lowerCaseMessage.includes('legacy')) {
+        return predefinedResponses.legacy;
+      } else if (lowerCaseMessage.includes('leadership')) {
+        return predefinedResponses.leadership;
+      } else if (lowerCaseMessage.includes('prison')) {
+        return predefinedResponses.prison;
+      }
+    }
+    return null; // If no keyword matches, return null to use Wikipedia response
+  };
+
+  // Handle sending messages in the chat
+  const handleSendMessage = async (event) => {
     event.preventDefault();
     if (!message.trim()) return;
 
-    const newMessage = { id: chatMessages.length + 1, message, user: 'You', timestamp: new Date().toISOString() };
+    const newMessage = {
+      id: chatMessages.length + 1,
+      message,
+      user: 'You',
+      timestamp: new Date().toISOString()
+    };
     setChatMessages([...chatMessages, newMessage]);
     setMessage('');
 
-    // Simulate character response with keyword detection
+    // Simulate character response with dynamic API
     if (activeCharacter) {
-      const lowerCaseMessage = message.toLowerCase();
-      const characterKeywords = activeCharacter.keywords || {};
+      setLoading(true); // Show loading state while fetching response
 
-      let responseFound = false;
+      // Detect if there are keywords in the user's message
+      const detectedResponse = detectKeywords(message);
 
-      // Check for keywords in the message
-      Object.keys(characterKeywords).forEach((keyword) => {
-        if (lowerCaseMessage.includes(keyword)) {
-          const characterResponse = {
-            id: chatMessages.length + 2,
-            message: characterKeywords[keyword],
-            user: activeCharacter.name,
-            timestamp: new Date().toISOString()
-          };
+      // Use predefined response if a keyword was found, otherwise fetch from Wikipedia
+      const characterResponseText = detectedResponse
+        ? detectedResponse
+        : await fetchCharacterResponse(activeCharacter.wikiQuery);
 
-          setTimeout(() => {
-            setChatMessages((prevMessages) => [...prevMessages, characterResponse]);
-          }, 1000);
+      const characterResponse = {
+        id: chatMessages.length + 2,
+        message: characterResponseText,
+        user: activeCharacter.name,
+        timestamp: new Date().toISOString()
+      };
 
-          responseFound = true;
-        }
-      });
-
-      // If no keyword found, send a random response
-      if (!responseFound) {
-        const randomResponse = activeCharacter.responses[Math.floor(Math.random() * activeCharacter.responses.length)];
-        const characterResponse = {
-          id: chatMessages.length + 2,
-          message: randomResponse,
-          user: activeCharacter.name,
-          timestamp: new Date().toISOString()
-        };
-
-        setTimeout(() => {
-          setChatMessages((prevMessages) => [...prevMessages, characterResponse]);
-        }, 1000);
-      }
+      // Delay response to simulate real-time chat
+      setTimeout(() => {
+        setChatMessages((prevMessages) => [...prevMessages, characterResponse]);
+        setLoading(false); // Stop loading after fetching
+      }, 1000);
     }
   };
 
@@ -116,7 +141,8 @@ function ChatHistory() {
       <Row className="mt-3">
         {characters.map((character) => (
           <Col key={character.id} md={4}>
-            <Card className="character-card" onClick={() => handleSelectCharacter(character)}>
+            <Card className="character-card" onClick={() => handleSelectCharacter(character)} style={{ border: activeCharacter?.id === character.id ? '2px solid blue' : '1px solid gray' }}>
+              <Card.Img variant="top" src={character.image} alt={character.name} />
               <Card.Body>
                 <Card.Title>{character.name}</Card.Title>
                 <Card.Text>{character.history}</Card.Text>
@@ -143,6 +169,14 @@ function ChatHistory() {
             </Card.Body>
           </Card>
 
+          {loading && (
+            <div className="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          )}
+
           <Form className="mt-3" onSubmit={handleSendMessage}>
             <Form.Group controlId="formMessage">
               <Form.Control
@@ -153,7 +187,9 @@ function ChatHistory() {
                 required
               />
             </Form.Group>
-            <Button variant="primary" type="submit" className="mt-2">Send</Button>
+            <Button variant="primary" type="submit" className="mt-2" disabled={loading}>
+              Send
+            </Button>
           </Form>
         </>
       )}
